@@ -4,14 +4,6 @@ from pagerank_script2 import *
 import numpy as np
 import math
 
-
-# Note: need to load the functions from the first two scripts
-
-
-
-#################### Programming Task 3  ################    
-
-
 def modified_link_matrix(web,pagelist,d=0.85):
     """ 
     Create a modified link matrix from web
@@ -28,8 +20,6 @@ def modified_link_matrix(web,pagelist,d=0.85):
     """
 
     fix_zero_columns(web)
-
-
     A = np.zeros(shape=(len(web), len(web)))
 
     for i, row in enumerate(A):
@@ -41,7 +31,6 @@ def modified_link_matrix(web,pagelist,d=0.85):
                 A[i,j] = 1/outlinks_len 
     return (d * A.T) + (1-d)*np.ones(shape=(len(web), len(web)))/len(web)
 
-#TODO: be able to set tolerances
 def eigenvector_pagerank(web,d=0.85):
     """
     Returns the pagerank of web as the eigenvector of the modified link matrix
@@ -54,17 +43,10 @@ def eigenvector_pagerank(web,d=0.85):
     pages=list(web.keys())
     M=modified_link_matrix(web,pages,d)
 
-    #get the eigenvalues and eigenvectors:
     lambdas, V=np.linalg.eig(M)
-
-    print(lambdas)
-    print("##")
-    print(V)
-
     eigvector = []
 
     for i, _lambda in enumerate(lambdas):
-        # print(_lambda.real, _lambda.imag)
         if math.isclose(_lambda.real, 1.00) and math.isclose(_lambda.imag, 0.00): 
             eigvector = V[:,i]
             break
@@ -73,7 +55,7 @@ def eigenvector_pagerank(web,d=0.85):
 
     eigvector = eigvector / sum(eigvector)
     for i, page in enumerate(web):
-        ranking[page] = eigvector[i] 
+        ranking[page] = eigvector[i].real 
 
     return ranking
 
@@ -90,18 +72,61 @@ def matrix_pagerank(web,power,d=0.85):
     pages=list(web.keys())
     M=modified_link_matrix(web,pages, d)
 
-    M_p = M**power
+    M_p = np.linalg.matrix_power(M, power)
     for i, page in enumerate(web):
         ranking[page] = M_p[:, 0][i] 
-
     return ranking
 
+def matrix_pagerank_iterative(web, true_ranking, max_iterations, tolerance,timer,d=0.85):
+    """
+    Returns the pagerank as the first column of the power'th power of the modified link matrix
+
+    Input: web is a dictionary of web pages and lines. 
+           d is a positive float, the damping constant
+    Output: A dictionary with the same keys as web, and the values the pageranks of the keys
+    """
+    ranking=dict() #convert to dictionary
+
+    pages=list(web.keys())
+    M=modified_link_matrix(web,pages, d)
+    new_M = M
+
+    def check_ranking(mat):
+
+        for i, page in enumerate(web):
+            ranking[page] = mat[:, 0][i] 
+
+        for key in true_ranking:
+            if key not in ranking:
+                return False
+            elif not (math.isclose(ranking[key], true_ranking[key], rel_tol = tolerance)):
+                # print(f'not close enough {ranking[key], true_ranking[key]}')
+                return False
+        return True
+
+    current_iterations = 0
+    while True:
+        timer.start()
+        current_iterations+=1
+        if current_iterations == max_iterations:
+            raise Exception('not found')
+
+        new_M = np.matmul(new_M, M)
+        timer.stop()
+        if check_ranking(new_M):
+            return ranking
+
 # # test the function modified_link_matrix
-web={0: {1, 2, 3}, 1: {5}, 2: set(), 3: {0, 4}, 4: {0}, 5: set()}
-# ranking2, iterations = recursive_pagerank(web,0.00001)
-print(eigenvector_pagerank(web))
-print("###")
-print(matrix_pagerank(web, 10))
+# web={1: {2}, 2: {3}, 3: {}}
+
+# M = modified_link_matrix(web, list(web.keys()), 1)
+# print(M)
+
+# ranking2, iterations = recursive_pagerank(web,0.00001, 200)
+# print(ranking2)
+# print(eigenvector_pagerank(web))
+# print("###")
+# print(matrix_pagerank(web, 100))
 
 
 # ranking = random_surf(web, 1000000)

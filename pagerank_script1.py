@@ -1,6 +1,7 @@
 
 import numpy as np
 import random
+import math
 ##########################  Helper Functions ################
 def make_web(n,k,kmin=0):
     """
@@ -18,53 +19,6 @@ def make_web(n,k,kmin=0):
         web[j] = set(np.random.choice(keys[keys!=j],numlinks,replace=False)) #chose links from web-{j}
     return web
 
-
-########       Programming Task 1   ###########################
-# def surf_step(web, page, d=0.85):
-#     """
-#     Return a probability distribution over which page to visit next,
-#     given a current page.
-#     Input: -web is a dictionary of webpages and links
-#            - page is a key of the dictionary, the page from which to 
-#            compute the next step
-#            - d is the damping factor
-
-#     - If page does not link to any page, then choose any page in web at random
-#     - Otherwise:
-#           With probability `d`, choose a page at random linked to by `page`,  
-#           With probability `1 - d`, choose  a page at random  from all pages in the web.
-#     Otuput: is a dictionary with the same keys as web, and the 
-#             value for each key is the probability of choosing that page next.
-#             (The sum of all these should be 1)
-#     """
-#     print(web)
-#     distribution=dict() # the distribution dictionary
-
-#     def even_probability():
-#         prob = 1/len(web)
-#         for key in web:
-#             distribution[key] = prob
-#         return distribution
-
-#     def page_probability():
-#         prob = 1/len(web[page])
-#         for key in web:
-#             if key in web[page]:
-#                 distribution[key] = prob
-#             else:
-#                 distribution[key] = 0
-#         return distribution
-        
-    
-#     if len(web[page]) == 0 or random.uniform(0,1) > d:
-#         return even_probability()
-#     else:
-#         return page_probability()
-
-#     return distribution
-
-
-# TODO: check that we always sum to 1
 def surf_step(web, page, d=0.85):
     """
     Return a probability distribution over which page to visit next,
@@ -82,7 +36,6 @@ def surf_step(web, page, d=0.85):
             value for each key is the probability of choosing that page next.
             (The sum of all these should be 1)
     """
-    # print(web)
 
     def even_probability():
 
@@ -119,8 +72,6 @@ def surf_step(web, page, d=0.85):
         return dampen_probability()
    
 
-    return distribution
-
 #TODO:add zeroes first
 def random_surf(web,n,d=0.85):
     """
@@ -138,11 +89,8 @@ def random_surf(web,n,d=0.85):
 
     sample = dict()
 
-    
-
     pages = list(web.keys())
     current_page = random.choice(pages) 
-    pages_len = len(pages)
 
     sample = dict()
 
@@ -166,6 +114,74 @@ def random_surf(web,n,d=0.85):
             ranking[key] = 0
         else:
             ranking[key] = sample[key]/n
+
+    return ranking
+
+def random_surf_with_thresholds(web,true_ranking, timer, max_iterations, tolerance, d=0.85):
+    """
+    Return PageRank values for each page by sampling `n` pages
+    according to surf_step. 
+    Input: web is a dictionary of webpages and links, 
+           n is an integer, the number of steps in the simulation
+           d is the damping factor, 
+           
+    Returns a dictionary with thes same keys as web (the pages), and
+    the value for key k is the page rank of page k. The sum of all PageRank values 
+    should be 1.
+    """
+    ranking=dict() # the ranking for each page
+
+    sample = dict()
+
+    pages = list(web.keys())
+    current_page = random.choice(pages) 
+
+    sample = dict()
+
+    def add_sample(page_name):
+        if page_name in sample:
+            sample[page_name] +=1
+        else:
+            sample[page_name] = 1
+
+
+    def create_ranking(current_iterations):
+        for key in web:
+            if key not in sample:
+                ranking[key] = 0
+            else:
+                ranking[key] = sample[key]/current_iterations
+    def check_sample():
+        create_ranking(current_iterations)
+        for key in true_ranking:
+            if key not in ranking:
+                return False
+            elif not (math.isclose(ranking[key], true_ranking[key], rel_tol = tolerance)):
+                # print(f'not close enough {ranking[key], true_ranking[key]}')
+                return False
+        return True
+        
+
+    add_sample(current_page)
+
+    current_iterations = 1
+
+
+    while True:
+        if (current_iterations == max_iterations-1):
+            print(ranking)
+            raise Exception('never found stuff')
+
+        timer.start()
+
+        new_page_probabilities = surf_step(web, current_page, d)
+        current_page = random.choices(list(new_page_probabilities.keys()), weights=new_page_probabilities.values(), k=1)[0]
+        add_sample(current_page)
+        timer.stop()
+
+        if check_sample():
+            return ranking
+        current_iterations += 1
 
     return ranking
 

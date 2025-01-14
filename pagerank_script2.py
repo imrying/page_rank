@@ -2,6 +2,7 @@
  Create a script called "pagerank_library.py" and put the functions created in this 
  project there
  """
+import math
 
 from pagerank_script1 import make_web, random_surf 
 import numpy as np
@@ -39,8 +40,7 @@ def fix_zero_columns(web):
 
 ###### Programming Task 2
 
-#TODO jeg kan ikke lide at vi opdatere værdien af en page af gangen, vil gerne gøre det i et hug
-def rank_update(web,pageranks,_page,d):
+def rank_update(web,pageranks,_page,inbounddic, d):
     ''''
     Updates the value of the pagerank for page based on the formula
         PR(p)= (1-d)/N + d*sum_j (PR(q)/OB(q))
@@ -58,8 +58,6 @@ def rank_update(web,pageranks,_page,d):
     '''
     fix_zero_columns(web)
     
-    #vil gerne opdatere en enkelt rangen af en enkelt: page, og bruger formlen samt den initiele definition: pageranks
-    inbounddic = generateinbounddictionary(web)
     newpageranks = {}
     increments = []
 
@@ -81,44 +79,39 @@ def rank_update(web,pageranks,_page,d):
     
     return increments
 
-#
-#myweb = {1:{2},2:{3},3:{}}
-#mypageranks = {1:1/3,2:1/3,3:1/3}
 
-#print(rank_update(myweb, mypageranks, 2, 0.5))
-#print(mypageranks)
+def recursive_pagerank(web,true_ranking,tolerance,max_iterations,timer,d=0.85):
 
-
-def recursive_pagerank(web,stopvalue,max_iterations=200,d=0.85):
-    """
-    Implements the recursive version of the PageRank algorithm by first creating a
-    pagerank of 1/N to all pages (where N is the total number of pages)
-    then applying "rank_update" repeteadly until either of two stopping conditions is
-    reached:
-    stopping condition 1: the maximum change from step n to step (n+1) over all pageranks 
-    is less than stopvalue, 
-    Stopping condition 2: the number of iterations has reached "max_iterations"
-
-    Input: web is a dictionary as in the output of "make_web", d is the damping constant,
-    stop value is a positive float, max_iterations is a positive integer
-    """
+    def check_ranking():
+        for key in true_ranking:
+            if key not in pageranks:
+                return False
+            elif not (math.isclose(pageranks[key], true_ranking[key], rel_tol = tolerance)):
+                # print(f'not close enough {ranking[key], true_ranking[key]}')
+                return False
+        return True
 
     #initialize pageranks to 1/N
     pageranks=dict()
     for key in web:
         pageranks[key] = 1/len(web)
 
+    inbounddic = generateinbounddictionary(web)
 
     for iteration in range(max_iterations):
-        increments = []
-        increments = rank_update(web, pageranks, "page", d)
-        if all(x < stopvalue for x in increments):
+        increments = rank_update(web, pageranks, "page",inbounddic, d)
+        timer.stop()
+        if check_ranking():
             break
+        timer.start()
+    else:
+        raise Exception('did not find anything')
+
     return pageranks, iteration
 
 
 
-# ##########   test it with this code #####
+##########   test it with this code #####
 # web={0: {1, 7}, 1: {3, 6}, 2: {0, 1, 3}, 3: set(), 4: set(), 5: {3, 4, 6}, 6: {0}, 7: {4, 6}}
 # ranking1 = random_surf(web, 100000)
 # ranking2, iterations = recursive_pagerank(web,0.00001)
