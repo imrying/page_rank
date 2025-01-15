@@ -19,9 +19,9 @@ def plot_csv_lines(csv_filename):
         plt.plot(x, df[col], marker='o', label=col)
 
     plt.yscale("log")
-    plt.xlabel('Nodes')
-    plt.ylabel('Values')
-    plt.title('Plot of CSV Data')
+    plt.xlabel('Number of pages with 10 connections')
+    plt.ylabel('Time in seconds (log10)')
+    plt.title('Calculating pagerank to 1% error margin. Calculated on DTU HPC')
 
     plt.legend()
 
