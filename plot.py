@@ -1,7 +1,7 @@
 
-CSV_FILENAME = 'timecalc.csv'
+CSV_FILENAME = 'timecalc2.csv'
 
-HEADERS = ["nodes", "connections", "eig_vector", "random_surf", "recursive", "iterative_matrix"]
+HEADERS = ["nodes", "connections", "eig_vector", "recursive", "iterative_matrix"]
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,7 +11,7 @@ def plot_csv_lines(csv_filename):
 
     x = df['nodes']
     
-    columns_to_plot = ['eig_vector', 'random_surf', 'recursive', "iterative_matrix"]
+    columns_to_plot = ['eig_vector', 'recursive', "iterative_matrix"]
 
     plt.figure(figsize=(8, 5))
     
@@ -21,7 +21,7 @@ def plot_csv_lines(csv_filename):
     plt.yscale("log")
     plt.xlabel('Number of pages with 10 connections')
     plt.ylabel('Time in seconds (log10)')
-    plt.title('Calculating pagerank to 1% error margin. Calculated on DTU HPC')
+    plt.title('Calculating pagerank to 1% error margin (d=0.85). Calculated on DTU HPC')
 
     plt.legend()
 
