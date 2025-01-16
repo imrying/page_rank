@@ -19,6 +19,20 @@ def make_web(n,k,kmin=0):
         web[j] = set(np.random.choice(keys[keys!=j],numlinks,replace=False)) #chose links from web-{j}
     return web
 
+def make_web2(n, link_range, kmin=0):
+    kmin, kmax = link_range
+    assert kmin <= kmax, "kmin must be less than or equal to kmax."
+    assert kmax < n, "kmax must be less than the number of pages (n)."
+
+    keys = np.array(range(n))
+    web = dict()
+
+    for j in keys:
+        numlinks = np.random.choice(range(kmin, kmax + 1))  
+        web[j] = set(np.random.choice(keys[keys != j], numlinks, replace=False)) 
+
+    return web
+
 def surf_step(web, page, d=0.85):
     """
     Return a probability distribution over which page to visit next,
@@ -160,12 +174,9 @@ def random_surf_with_thresholds(web,true_ranking, timer, max_iterations, toleran
                 # print(f'not close enough {ranking[key], true_ranking[key]}')
                 return False
         return True
-        
 
     add_sample(current_page)
-
     current_iterations = 1
-
 
     while True:
         if (current_iterations == max_iterations-1):
@@ -183,9 +194,7 @@ def random_surf_with_thresholds(web,true_ranking, timer, max_iterations, toleran
             return ranking
         current_iterations += 1
 
-    return ranking
-
-
+    return ranking, current_iterations
 
 def plot_ranking(web,ranking,d=0.85):
     """
@@ -197,7 +206,7 @@ def plot_ranking(web,ranking,d=0.85):
     "make_web" and "random_surf".
     """
     import graphviz
-    dot = graphviz.Digraph(comment='wowo')
+    dot = graphviz.Digraph(comment='pageranking', node_attr={'shape': 'circle', 'fontsize': '10'}, edge_attr={'fontsize': '8'})
 
     for key in web:
         dot.node(str(key), label=f'{key}: {ranking[key]:.2f}')
@@ -207,10 +216,7 @@ def plot_ranking(web,ranking,d=0.85):
         for value in web[key]:
             dot.edge(str(key), str(value), label=f'{round(page_probality[value]*100)}%')
             
-    dot.render('wowo.gv', view=True)
-
-    print(dot.source)
-    
+    dot.render('file.gv', format='png',view=True)
 
 
 #########            Test code with this   #################3

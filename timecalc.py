@@ -47,10 +47,10 @@ def generate_time_calc(d, number_of_graphs):
 
         CONNECTIONS = 10
         MAX_ITERATIONS = 10**7
-        TOLERANCE = 0.01
+        TOLERANCE = 0.1
     
-        for i in range(CONNECTIONS, number_of_graphs):
-            print(f'calculating for graph with {i} nodes and {CONNECTIONS-1}')
+        for i in range(CONNECTIONS, number_of_graphs, 500):
+            print(f'{i} out of {number_of_graphs}')
             # generate the web
             web = make_web(i,CONNECTIONS-1)
 
@@ -60,7 +60,7 @@ def generate_time_calc(d, number_of_graphs):
             true_ranking = eigenvector_pagerank(web, d)
         
             timer.stop()
-            print(true_ranking)
+            # print(true_ranking)
 
             eig_time = timer.get_elapsed_time()
             timer.reset()
@@ -71,28 +71,28 @@ def generate_time_calc(d, number_of_graphs):
             timer.stop()
             recursive_time = timer.get_elapsed_time()
             timer.reset()
-            print(recursive_rating)
+            # print(recursive_rating)
 
 
             timer.start()
             matrix_iterative_power = matrix_pagerank_iterative(web, true_ranking, MAX_ITERATIONS, TOLERANCE, timer,d)
             timer.stop()
             matrix_iterative_time = timer.get_elapsed_time()
-            print(matrix_iterative_power)
+            # print(matrix_iterative_power)
 
             writer.writerow([i, CONNECTIONS-1, eig_time, recursive_time, matrix_iterative_time])
     finally:
         file.close()
     
 if __name__ == '__main__':
-    generate_time_calc(0.85, 1000)
+    generate_time_calc(0.85, 10000)
    
 
 
 
 
 # timer.start()
-# sample_rating = random_surf_with_thresholds(web,true_ranking, timer, MAX_ITERATIONS, TOLERANCE, d)
+# sample_rating, _ = random_surf_with_thresholds(web,true_ranking, timer, MAX_ITERATIONS, TOLERANCE, d)
 # timer.stop()
 # sample_time = timer.get_elapsed_time()
 # timer.reset()

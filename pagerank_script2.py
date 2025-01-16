@@ -110,6 +110,48 @@ def recursive_pagerank(web,true_ranking,tolerance,max_iterations,timer,d=0.85):
     return pageranks, iteration
 
 
+def get_vector(pageranking):
+    mat = np.empty((0, 1))  
+    for key in pageranking:
+        mat = np.vstack([mat, [[pageranking[key]]]]) 
+    return mat    
+
+
+def convergence_recursive_pagerank(web,true_ranking,tolerance,max_iterations,writer, d=0.85):
+    true_vec = get_vector(true_ranking)
+
+    pageranks=dict()
+    def check_ranking():
+        curr_rank = get_vector(pageranks)
+
+        max_matrix_norm = np.max(np.abs(true_vec - curr_rank))
+        writer.writerow([max_matrix_norm])
+        # add the data first
+        
+        for key in true_ranking:
+            if key not in pageranks:
+                return False
+            elif not (math.isclose(pageranks[key], true_ranking[key], rel_tol = tolerance)):
+                # print(f'not close enough {ranking[key], true_ranking[key]}')
+                return False
+        return True
+
+    #initialize pageranks to 1/N
+    for key in web:
+        pageranks[key] = 1/len(web)
+
+    inbounddic = generateinbounddictionary(web)
+
+    for iteration in range(max_iterations):
+        increments = rank_update(web, pageranks, "page",inbounddic, d)
+        if check_ranking():
+            break
+    else:
+        raise Exception('did not find anything')
+
+    return pageranks, iteration
+
+
 
 ##########   test it with this code #####
 # web={0: {1, 7}, 1: {3, 6}, 2: {0, 1, 3}, 3: set(), 4: set(), 5: {3, 4, 6}, 6: {0}, 7: {4, 6}}

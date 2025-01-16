@@ -18,7 +18,6 @@ def modified_link_matrix(web,pagelist,d=0.85):
           to any page, then all entries in row j are given the same value (1/N).
           E is np.ones([N,N])
     """
-
     fix_zero_columns(web)
     A = np.zeros(shape=(len(web), len(web)))
 
@@ -42,7 +41,6 @@ def eigenvector_pagerank(web,d=0.85):
 
     pages=list(web.keys())
     M=modified_link_matrix(web,pages,d)
-
     lambdas, V=np.linalg.eig(M)
     eigvector = []
 
@@ -67,7 +65,7 @@ def matrix_pagerank(web,power,d=0.85):
            d is a positive float, the damping constant
     Output: A dictionary with the same keys as web, and the values the pageranks of the keys
     """
-    ranking=dict() #convert to dictionary
+    ranking=dict()
 
     pages=list(web.keys())
     M=modified_link_matrix(web,pages, d)
@@ -85,14 +83,12 @@ def matrix_pagerank_iterative(web, true_ranking, max_iterations, tolerance,timer
            d is a positive float, the damping constant
     Output: A dictionary with the same keys as web, and the values the pageranks of the keys
     """
-    ranking=dict() #convert to dictionary
-
+    ranking=dict()
     pages=list(web.keys())
     M=modified_link_matrix(web,pages, d)
     new_M = M
 
     def check_ranking(mat):
-
         for i, page in enumerate(web):
             ranking[page] = mat[:, 0][i] 
 
@@ -100,7 +96,6 @@ def matrix_pagerank_iterative(web, true_ranking, max_iterations, tolerance,timer
             if key not in ranking:
                 return False
             elif not (math.isclose(ranking[key], true_ranking[key], rel_tol = tolerance)):
-                # print(f'not close enough {ranking[key], true_ranking[key]}')
                 return False
         return True
 
@@ -113,6 +108,45 @@ def matrix_pagerank_iterative(web, true_ranking, max_iterations, tolerance,timer
 
         new_M = np.matmul(new_M, M)
         timer.stop()
+        if check_ranking(new_M):
+            return ranking
+
+def matrix_pagerank_csv(web, true_ranking, max_iterations, tolerance,writer,d=0.85):
+    """
+    Returns the pagerank as the first column of the power'th power of the modified link matrix
+
+    Input: web is a dictionary of web pages and lines. 
+           d is a positive float, the damping constant
+    Output: A dictionary with the same keys as web, and the values the pageranks of the keys
+    """
+    ranking=dict() #convert to dictionary
+
+    pages=list(web.keys())
+    M=modified_link_matrix(web,pages, d)
+    new_M = M
+    true_vec = get_vector(true_ranking)
+
+    def check_ranking(mat):
+        for i, page in enumerate(web):
+            ranking[page] = mat[:, 0][i] 
+
+        curr_rank = get_vector(ranking)
+        max_matrix_norm = np.max(np.abs(true_vec - curr_rank))
+        writer.writerow([str(max_matrix_norm)])
+
+        for key in true_ranking:
+            if key not in ranking:
+                return False
+            elif not (math.isclose(ranking[key], true_ranking[key], rel_tol = tolerance)):
+                return False
+        return True
+    current_iterations = 0
+    while True:
+        current_iterations+=1
+        if current_iterations == max_iterations:
+            raise Exception('not found')
+
+        new_M = np.matmul(new_M, M)
         if check_ranking(new_M):
             return ranking
 
