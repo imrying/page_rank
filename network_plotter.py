@@ -4,7 +4,7 @@ from pagerank_script1 import *
 
 
 d=0.85
-web = make_web(15, 2)
+web = make_web(50, 5)
 true_ranking = eigenvector_pagerank(web,d)
 
 

@@ -19,20 +19,6 @@ def make_web(n,k,kmin=0):
         web[j] = set(np.random.choice(keys[keys!=j],numlinks,replace=False)) #chose links from web-{j}
     return web
 
-def make_web2(n, link_range, kmin=0):
-    kmin, kmax = link_range
-    assert kmin <= kmax, "kmin must be less than or equal to kmax."
-    assert kmax < n, "kmax must be less than the number of pages (n)."
-
-    keys = np.array(range(n))
-    web = dict()
-
-    for j in keys:
-        numlinks = np.random.choice(range(kmin, kmax + 1))  
-        web[j] = set(np.random.choice(keys[keys != j], numlinks, replace=False)) 
-
-    return web
-
 def surf_step(web, page, d=0.85):
     """
     Return a probability distribution over which page to visit next,
@@ -52,16 +38,14 @@ def surf_step(web, page, d=0.85):
     """
 
     def even_probability():
-
-        distribution=dict() # the distribution dictionary
+        distribution=dict() 
         prob = 1/len(web)
         for key in web:
             distribution[key] = prob
         return distribution
 
     def page_probability():
-        distribution=dict() # the distribution dictionary
-
+        distribution=dict() 
         prob = 1/len(web[page])
         for key in web:
             if key in web[page]:
@@ -81,12 +65,15 @@ def surf_step(web, page, d=0.85):
 
         
     if len(web[page]) == 0:
+        # if page p has no outlinks choose any page from W at random
         return even_probability()
     else:
+        # else if f page p has outlinks, {q1, ..., qmp }, then, with probability d choose at random
+        # one of the pages that page p links to, and with probability 1−d choose a
+        # random page from the whole of W.
         return dampen_probability()
    
 
-#TODO:add zeroes first
 def random_surf(web,n,d=0.85):
     """
     Return PageRank values for each page by sampling `n` pages
@@ -100,27 +87,24 @@ def random_surf(web,n,d=0.85):
     should be 1.
     """
     ranking=dict() # the ranking for each page
-
-    sample = dict()
+    sample = dict() # the samples we collect while running the simulation
 
     pages = list(web.keys())
-    current_page = random.choice(pages) 
-
-    sample = dict()
 
     def add_sample(page_name):
         if page_name in sample:
-            sample[page_name] +=1
+            sample[page_name] += 1
         else:
             sample[page_name] = 1
 
+    # adds the initial page we start the simulation from
+    current_page = random.choice(pages) 
     add_sample(current_page)
 
     for i in range(0,n-1):
         new_page_probabilities = surf_step(web, current_page, d)
-
+        # get a new page based on the page probabilities returned
         current_page = random.choices(list(new_page_probabilities.keys()), weights=new_page_probabilities.values(), k=1)[0]
-
         add_sample(current_page)
 
     for key in web:
@@ -131,10 +115,39 @@ def random_surf(web,n,d=0.85):
 
     return ranking
 
+def plot_ranking(web,ranking,d=0.85):
+    """
+    plots a graphical representation of the input web, indicating 
+    hyperlinks with arrows, and visualizing the pagerank of each page
+    by size.
+    
+    Input: web and ranking are dictionaries, as output by the functions
+    "make_web" and "random_surf". Uses graphviz.
+    """
+    import graphviz
+    # Create the initial dot object
+    dot = graphviz.Digraph(comment='pageranking', node_attr={'shape': 'circle', 'fontsize': '10'}, edge_attr={'fontsize': '8'})
+
+    # add a node for each key in web with its ranking
+    for key in web:
+        dot.node(str(key), label=f'{key}: {ranking[key]:.2f}')
+
+    # create all edges and add the single probability from going from 
+    # pag A to B
+    for key in web:
+        page_probality = surf_step(web, key, d)
+        for value in web[key]:
+            dot.edge(str(key), str(value), label=f'{round(page_probality[value]*100)}%')
+            
+    dot.render('file.gv', format='png',view=True)
+
+
+
+################### Extra functions used for time and convergence data collection ###
 def random_surf_with_thresholds(web,true_ranking, timer, max_iterations, tolerance, d=0.85):
     """
-    Return PageRank values for each page by sampling `n` pages
-    according to surf_step. 
+    Return PageRank and iteration values for each page by sampling `n` pages
+    according to surf_step
     Input: web is a dictionary of webpages and links, 
            n is an integer, the number of steps in the simulation
            d is the damping factor, 
@@ -144,7 +157,6 @@ def random_surf_with_thresholds(web,true_ranking, timer, max_iterations, toleran
     should be 1.
     """
     ranking=dict() # the ranking for each page
-
     sample = dict()
 
     pages = list(web.keys())
@@ -196,27 +208,6 @@ def random_surf_with_thresholds(web,true_ranking, timer, max_iterations, toleran
 
     return ranking, current_iterations
 
-def plot_ranking(web,ranking,d=0.85):
-    """
-    plots a graphical representation of the input web, indicating 
-    hyperlinks with arrows, and visualizing the pagerank of each page
-    by size.
-    
-    Input: web and ranking are dictionaries, as output by the functions
-    "make_web" and "random_surf".
-    """
-    import graphviz
-    dot = graphviz.Digraph(comment='pageranking', node_attr={'shape': 'circle', 'fontsize': '10'}, edge_attr={'fontsize': '8'})
-
-    for key in web:
-        dot.node(str(key), label=f'{key}: {ranking[key]:.2f}')
-
-    for key in web:
-        page_probality = surf_step(web, key, d)
-        for value in web[key]:
-            dot.edge(str(key), str(value), label=f'{round(page_probality[value]*100)}%')
-            
-    dot.render('file.gv', format='png',view=True)
 
 
 #########            Test code with this   #################3

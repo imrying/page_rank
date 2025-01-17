@@ -19,7 +19,9 @@ def modified_link_matrix(web,pagelist,d=0.85):
           E is np.ones([N,N])
     """
     fix_zero_columns(web)
-    A = np.zeros(shape=(len(web), len(web)))
+    N = len(web)
+    # Create a N*N matrix with zeroes 
+    A = np.zeros(shape=(N, N))
 
     for i, row in enumerate(A):
         outlinks = web[pagelist[i]]
@@ -28,7 +30,7 @@ def modified_link_matrix(web,pagelist,d=0.85):
         for j, elem in enumerate(row):
             if pagelist[j] in outlinks:
                 A[i,j] = 1/outlinks_len 
-    return (d * A.T) + (1-d)*np.ones(shape=(len(web), len(web)))/len(web)
+    return (d * A.T) + (1-d)*np.ones(shape=(N, N))/N
 
 def eigenvector_pagerank(web,d=0.85):
     """
@@ -38,20 +40,24 @@ def eigenvector_pagerank(web,d=0.85):
     Output: A dictionary with the same keys as web, and the values the pageranks of the keys
     """
     ranking=dict()
-
     pages=list(web.keys())
     M=modified_link_matrix(web,pages,d)
     lambdas, V=np.linalg.eig(M)
     eigvector = []
 
+    # Select the eigenvalue = 1
     for i, _lambda in enumerate(lambdas):
+        # Since some of the eigenvalues can be complex we also check it
         if math.isclose(_lambda.real, 1.00) and math.isclose(_lambda.imag, 0.00): 
             eigvector = V[:,i]
             break
     else:
         raise Exception("ERROR: no eig value with 1 found")
 
+    # normalize the vector
     eigvector = eigvector / sum(eigvector)
+
+    # assign the ranking to each page
     for i, page in enumerate(web):
         ranking[page] = eigvector[i].real 
 
@@ -151,14 +157,16 @@ def matrix_pagerank_csv(web, true_ranking, max_iterations, tolerance,writer,d=0.
             return ranking
 
 # # test the function modified_link_matrix
-# web={1: {2}, 2: {3}, 3: {}}
+web={1: {2}, 2: {3}, 3: {}}
 
-# M = modified_link_matrix(web, list(web.keys()), 1)
+M = modified_link_matrix(web, list(web.keys()), 1)
 # print(M)
 
 # ranking2, iterations = recursive_pagerank(web,0.00001, 200)
+# random_surf_rank = random_surf(web, 100000)
 # print(ranking2)
 # print(eigenvector_pagerank(web))
+# print(random_surf_rank)
 # print("###")
 # print(matrix_pagerank(web, 100))
 

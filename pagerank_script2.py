@@ -20,28 +20,35 @@ def print_rank(ranking,k=4,title=""):
     return
 
 
+
 def generateinbounddictionary(web):
-        inbounddict = {}
-        for _page in web:
-            inbounddict[_page] = []
-            for outpage in web:
-                if _page in web[outpage]:
-                    inbounddict[_page].append(outpage)
-        return inbounddict
+    '''
+    generates a dictonary like web, but instead of outgoing
+    links it has its ingoing links
+    '''
+    inbounddict = {}
+    for _page in web:
+        inbounddict[_page] = []
+        for outpage in web:
+            if _page in web[outpage]:
+                inbounddict[_page].append(outpage)
+    return inbounddict
 
 def fix_zero_columns(web):
+    '''
+    If the page is a sink and has zero outlinks, we update the
+    web st. it references all pages.
+    '''
     for fixpage in web:
         if len(web[fixpage]) == 0:
             newreferences = []
             for p in web:
                 newreferences.append(p)
             web[fixpage] = set(newreferences)
+
     
-
-###### Programming Task 2
-
 def rank_update(web,pageranks,_page,inbounddic, d):
-    ''''
+    '''
     Updates the value of the pagerank for page based on the formula
         PR(p)= (1-d)/N + d*sum_j (PR(q)/OB(q))
     where the sum is over all pages q that link to page, PR(q) is the current
@@ -60,19 +67,18 @@ def rank_update(web,pageranks,_page,inbounddic, d):
     
     newpageranks = {}
     increments = []
-
     for page in web:
         inboundsum = 0
 
+        # go through the indbound to the page and calculate the indbound sum of probabilities.
         for inboundvector in inbounddic[page]:
             inboundsum += pageranks[inboundvector]/len(web[inboundvector])
 
+        # calculate the pagerank from formula 2.2
         pagerank = (1-d)/len(web) + d*inboundsum
-    
         increments.append(abs(pageranks[page] - pagerank))
 
         newpageranks[page] = pagerank
-        
 
     for page in pageranks:
         pageranks[page] = newpageranks[page]
@@ -80,14 +86,41 @@ def rank_update(web,pageranks,_page,inbounddic, d):
     return increments
 
 
-def recursive_pagerank(web,true_ranking,tolerance,max_iterations,timer,d=0.85):
+def recursive_pagerank(web,stopvalue,max_iterations=10000,d=0.85):
+    """
+    Implements the recursive version of the PageRank algorithm by first creating a
+    pagerank of 1/N to all pages (where N is the total number of pages)
+    then applying "rank_update" repeteadly until either of two stopping conditions is
+    reached:
+    stopping condition 1: the maximum change from step n to step (n+1) over all pageranks 
+    is less than stopvalue, 
+    Stopping condition 2: the number of iterations has reached "max_iterations"
+    Input: web is a dictionary as in the output of "make_web", d is the damping constant,
+    stop value is a positive float, max_iterations is a positive integer
+    """
+    #initialize pageranks to 1/N
+    pageranks=dict()
+    for key in web:
+        pageranks[key] = 1/len(web)
+
+    inbounddic = generateinbounddictionary(web)
+
+    for iteration in range(max_iterations):
+        increments = rank_update(web, pageranks, "page", inbounddic, d)
+        # if all the increments are smaller than our stopvalue we break and return
+        if all(x < stopvalue for x in increments):
+            break
+    return pageranks, iteration
+
+
+def recursive_pagerank_timed(web,true_ranking,tolerance,max_iterations,timer,d=0.85):
+    ''' Timed version of recursive pagerank'''
 
     def check_ranking():
         for key in true_ranking:
             if key not in pageranks:
                 return False
             elif not (math.isclose(pageranks[key], true_ranking[key], rel_tol = tolerance)):
-                # print(f'not close enough {ranking[key], true_ranking[key]}')
                 return False
         return True
 
@@ -111,11 +144,11 @@ def recursive_pagerank(web,true_ranking,tolerance,max_iterations,timer,d=0.85):
 
 
 def get_vector(pageranking):
+    ''' creates a vector from the ranking '''
     mat = np.empty((0, 1))  
     for key in pageranking:
         mat = np.vstack([mat, [[pageranking[key]]]]) 
     return mat    
-
 
 def convergence_recursive_pagerank(web,true_ranking,tolerance,max_iterations,writer, d=0.85):
     true_vec = get_vector(true_ranking)
@@ -152,11 +185,3 @@ def convergence_recursive_pagerank(web,true_ranking,tolerance,max_iterations,wri
     return pageranks, iteration
 
 
-
-##########   test it with this code #####
-# web={0: {1, 7}, 1: {3, 6}, 2: {0, 1, 3}, 3: set(), 4: set(), 5: {3, 4, 6}, 6: {0}, 7: {4, 6}}
-# ranking1 = random_surf(web, 100000)
-# ranking2, iterations = recursive_pagerank(web,0.00001)
-# print_rank(ranking1,4)
-# print_rank(ranking2,4)
-# print(iterations)

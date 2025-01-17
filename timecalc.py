@@ -67,12 +67,18 @@ def generate_time_calc(d, number_of_graphs):
 
 
             timer.start()
-            recursive_rating = recursive_pagerank(web, true_ranking, TOLERANCE, MAX_ITERATIONS, timer, d) 
+            recursive_rating = recursive_pagerank_timed(web, true_ranking, TOLERANCE, MAX_ITERATIONS, timer, d) 
             timer.stop()
             recursive_time = timer.get_elapsed_time()
             timer.reset()
             # print(recursive_rating)
 
+            # timer.start()
+            # sample_rating, _ = random_surf_with_thresholds(web,true_ranking, timer, MAX_ITERATIONS, TOLERANCE, d)
+            # timer.stop()
+            # sample_time = timer.get_elapsed_time()
+            # timer.reset()
+            # print(sample_rating)
 
             timer.start()
             matrix_iterative_power = matrix_pagerank_iterative(web, true_ranking, MAX_ITERATIONS, TOLERANCE, timer,d)
@@ -91,9 +97,3 @@ if __name__ == '__main__':
 
 
 
-# timer.start()
-# sample_rating, _ = random_surf_with_thresholds(web,true_ranking, timer, MAX_ITERATIONS, TOLERANCE, d)
-# timer.stop()
-# sample_time = timer.get_elapsed_time()
-# timer.reset()
-# print(sample_rating)
